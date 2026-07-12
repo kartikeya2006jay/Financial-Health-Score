@@ -71,7 +71,8 @@ export default function App() {
     e.preventDefault();
     setLoading(true);
     try {
-      const { data } = await axios.post('http://localhost:8000/api/analyze-health', formData);
+      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+      const { data } = await axios.post(`${apiBaseUrl}/api/analyze-health`, formData);
       setResult(data);
       try {
         await addDoc(collection(db, 'assessments'), {
