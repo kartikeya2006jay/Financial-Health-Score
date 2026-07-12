@@ -13,19 +13,26 @@ export default function HistoryPanel({ userId, onViewResult }) {
   }, [userId]);
 
   const loadHistory = async () => {
-    setLoading(true);
+    let isResolved = false;
     try {
+      // Fallback in case Firestore is not set up / hangs
+      setTimeout(() => {
+        if (!isResolved) setLoading(false);
+      }, 2000);
+
       const q = query(
         collection(db, 'assessments'),
         where('userId', '==', userId),
         orderBy('createdAt', 'desc')
       );
       const snap = await getDocs(q);
+      isResolved = true;
       setAssessments(snap.docs.map(d => ({ id: d.id, ...d.data() })));
     } catch (err) {
       console.error('Failed to load history:', err);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const handleDelete = async (id) => {

@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import random
+import hashlib
 import numpy as np
 import pandas as pd
 from sklearn.ensemble import RandomForestRegressor
@@ -74,11 +75,16 @@ def read_root():
 
 @app.post("/api/analyze-health", response_model=HealthScoreResponse)
 def analyze_health(data: EnterpriseData):
-    # Simulate fetched metrics
-    cash_flow_health = random.randint(50, 95)
-    gst_compliance = random.randint(60, 100)
-    epfo_stability = random.randint(40, 95)
-    upi_volume = random.randint(60, 100)
+    # Use GSTIN to create a deterministic hash seed for the random number generator
+    # This ensures the exact same input ALWAYS yields the exact same "real" data
+    seed_val = int(hashlib.sha256(data.gstin.encode('utf-8')).hexdigest(), 16) % (10**8)
+    random.seed(seed_val)
+    
+    # Deterministic fetched metrics based on the enterprise ID
+    cash_flow_health = random.randint(30, 95)
+    gst_compliance = random.randint(40, 100)
+    epfo_stability = random.randint(20, 95)
+    upi_volume = random.randint(30, 100)
     
     input_features = np.array([[cash_flow_health, gst_compliance, epfo_stability, upi_volume]])
     
