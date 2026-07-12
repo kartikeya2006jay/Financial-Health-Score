@@ -28,15 +28,23 @@ export default function SettingsPanel({ userId }) {
 
   useEffect(() => {
     const loadSettings = async () => {
+      let isResolved = false;
       try {
+        // Fallback in case Firestore is not set up / hangs
+        setTimeout(() => {
+          if (!isResolved) setLoaded(true);
+        }, 2000);
+
         const snap = await getDoc(doc(db, 'settings', userId));
+        isResolved = true;
         if (snap.exists()) {
           setSettings({ ...DEFAULT_SETTINGS, ...snap.data() });
         }
       } catch (err) {
         console.error('Failed to load settings:', err);
+      } finally {
+        setLoaded(true);
       }
-      setLoaded(true);
     };
     if (userId) loadSettings();
   }, [userId]);
