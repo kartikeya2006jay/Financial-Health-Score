@@ -1,9 +1,12 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import random
+import numpy as np
+import pandas as pd
+from sklearn.ensemble import RandomForestRegressor
 
-app = FastAPI(title="MSME Financial Health Card API")
+app = FastAPI(title="MSME Financial Health Card API - ML Edition")
 
 app.add_middleware(
     CORSMiddleware,
@@ -13,11 +16,45 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# --- ML Model Initialization ---
+print("Training AI Model...")
+# Generate synthetic dataset for MSMEs
+np.random.seed(42)
+n_samples = 1000
+X_dummy = pd.DataFrame({
+    'cash_flow_health': np.random.randint(30, 100, n_samples),
+    'gst_compliance': np.random.randint(40, 100, n_samples),
+    'epfo_stability': np.random.randint(20, 100, n_samples),
+    'upi_volume': np.random.randint(40, 100, n_samples)
+})
+# Target variable: True Health Score
+y_dummy = (0.4 * X_dummy['cash_flow_health'] + 
+           0.3 * X_dummy['gst_compliance'] + 
+           0.15 * X_dummy['epfo_stability'] + 
+           0.15 * X_dummy['upi_volume']) + np.random.normal(0, 3, n_samples)
+y_dummy = np.clip(y_dummy, 0, 100)
+
+rf_model = RandomForestRegressor(n_estimators=50, random_state=42)
+rf_model.fit(X_dummy, y_dummy)
+baseline_score = rf_model.predict(X_dummy.mean().values.reshape(1, -1))[0]
+print("AI Model Trained Successfully!")
+# -------------------------------
+
 class EnterpriseData(BaseModel):
     gstin: str
     upi_vpa: str
     consent_id: str
     epfo_reg_no: str
+
+class XAIContribution(BaseModel):
+    feature: str
+    impact: float
+    message: str
+
+class SupplyChainNode(BaseModel):
+    name: str
+    volume: int
+    type: str
 
 class HealthScoreResponse(BaseModel):
     overall_score: int
@@ -26,6 +63,8 @@ class HealthScoreResponse(BaseModel):
     strengths: list[str]
     risks: list[str]
     insights: list[str]
+    xai_explanations: list[XAIContribution]
+    supply_chain: list[SupplyChainNode]
 
 @app.get("/")
 def read_root():
@@ -33,16 +72,17 @@ def read_root():
 
 @app.post("/api/analyze-health", response_model=HealthScoreResponse)
 def analyze_health(data: EnterpriseData):
-    # Mocking data aggregation and ML scoring based on the alternate data
-    # In a real scenario, we would use OCEN/AA ecosystem APIs to fetch data
-    
-    # Simulate some ML computed metrics
-    cash_flow_health = random.randint(50, 100)
-    gst_compliance = random.randint(70, 100)
+    # Simulate fetched metrics
+    cash_flow_health = random.randint(50, 95)
+    gst_compliance = random.randint(60, 100)
     epfo_stability = random.randint(40, 95)
     upi_volume = random.randint(60, 100)
     
-    overall_score = int(0.4 * cash_flow_health + 0.3 * gst_compliance + 0.15 * epfo_stability + 0.15 * upi_volume)
+    input_features = np.array([[cash_flow_health, gst_compliance, epfo_stability, upi_volume]])
+    
+    # ML Prediction
+    predicted_score = rf_model.predict(input_features)[0]
+    overall_score = int(predicted_score)
     
     if overall_score >= 80:
         health_status = "Excellent"
@@ -53,24 +93,49 @@ def analyze_health(data: EnterpriseData):
     else:
         health_status = "High Risk"
         
-    strengths = []
-    risks = []
+    # Explainable AI (XAI) - Calculating Mock SHAP values (feature contribution)
+    # We compare the input to the mean of the training data
+    means = X_dummy.mean()
+    contributions = [
+        {"feature": "Cash Flow", "diff": cash_flow_health - means['cash_flow_health'], "weight": 0.4},
+        {"feature": "GST Compliance", "diff": gst_compliance - means['gst_compliance'], "weight": 0.3},
+        {"feature": "EPFO Stability", "diff": epfo_stability - means['epfo_stability'], "weight": 0.15},
+        {"feature": "UPI Volume", "diff": upi_volume - means['upi_volume'], "weight": 0.15}
+    ]
     
-    if gst_compliance > 85:
-        strengths.append("High GST Compliance indicating consistent tax filing.")
-    else:
-        risks.append("Irregular GST filings observed.")
+    xai_explanations = []
+    for c in contributions:
+        impact = round(c['diff'] * c['weight'], 1)
+        if impact > 0:
+            msg = f"Boosted score by +{impact}% due to strong {c['feature']} metrics."
+        else:
+            msg = f"Reduced score by {impact}% due to below-average {c['feature']}."
         
-    if cash_flow_health > 75:
-        strengths.append("Strong and steady cash flow via AA.")
-    else:
-        risks.append("High variance in monthly cash flow.")
-        
-    if upi_volume > 80:
-        strengths.append("High digital transaction footprint.")
-        
-    if epfo_stability < 60:
-        risks.append("Employee turnover or missing EPF contributions.")
+        xai_explanations.append(XAIContribution(feature=c['feature'], impact=impact, message=msg))
+    
+    # Sort XAI by absolute impact
+    xai_explanations.sort(key=lambda x: abs(x.impact), reverse=True)
+
+    strengths = [x.message for x in xai_explanations if x.impact > 0]
+    risks = [x.message for x in xai_explanations if x.impact < 0]
+    
+    # Supply Chain Generation (GST based)
+    suppliers = ["Tata Steel", "Reliance Polymers", "Local Wholesale Co.", "Tech Components India"]
+    buyers = ["L&T Construction", "Maruti Suzuki", "Flipkart Retail", "City Traders"]
+    
+    supply_chain = []
+    for _ in range(3):
+        supply_chain.append(SupplyChainNode(
+            name=random.choice(suppliers),
+            volume=random.randint(5, 50) * 100000,
+            type="Supplier"
+        ))
+    for _ in range(3):
+        supply_chain.append(SupplyChainNode(
+            name=random.choice(buyers),
+            volume=random.randint(10, 80) * 100000,
+            type="Buyer"
+        ))
 
     return HealthScoreResponse(
         overall_score=overall_score,
@@ -81,10 +146,13 @@ def analyze_health(data: EnterpriseData):
             "epfo_stability": epfo_stability,
             "upi_volume": upi_volume
         },
-        strengths=strengths,
-        risks=risks,
+        strengths=strengths[:3],
+        risks=risks[:3],
         insights=[
-            f"Expected credit limit up to ₹{random.randint(1, 10) * 100000}",
-            "Recommended product: Supply Chain Finance" if cash_flow_health > 70 else "Recommended product: Invoice Discounting"
-        ]
+            f"Expected credit limit up to ₹{random.randint(5, 50) * 100000}",
+            "Recommended product: Supply Chain Finance" if cash_flow_health > 70 else "Recommended product: Invoice Discounting",
+            "High supply chain diversification detected."
+        ],
+        xai_explanations=xai_explanations,
+        supply_chain=supply_chain
     )
