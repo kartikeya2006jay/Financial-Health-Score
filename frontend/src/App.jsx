@@ -1,11 +1,17 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
-import { ShieldCheck, Activity, TrendingUp, Users, Brain, Network, Download, ArrowRight, ArrowLeft } from 'lucide-react';
+import { ShieldCheck, Activity, TrendingUp, Users, Brain, Network, Download, ArrowRight, LogOut } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
+import { auth } from './firebase';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
+import Auth from './components/Auth';
 import './App.css';
 
 function App() {
+  const [user, setUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
+
   const [formData, setFormData] = useState({
     gstin: '',
     upi_vpa: '',
@@ -17,8 +23,21 @@ function App() {
   
   const dashboardRef = useRef(null);
 
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+      setAuthLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
+
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleLogout = async () => {
+    await signOut(auth);
+    setResult(null);
   };
 
   const handleSubmit = async (e) => {
@@ -66,21 +85,38 @@ function App() {
     }
   };
 
+  if (authLoading) {
+    return <div className="app-container"><h2 style={{marginTop: '20vh'}}>Loading...</h2></div>;
+  }
+
+  if (!user) {
+    return (
+      <div className="app-container">
+        <Auth onLoginSuccess={() => {}} />
+      </div>
+    );
+  }
+
   return (
     <div className="app-container">
       <header className="header">
         <h1>MSME Health Card</h1>
         <p>AI-Driven Financial Assessment using Alternate Data</p>
-        {result && (
-          <div className="header-actions">
-            <button className="submit-btn secondary-btn" onClick={() => setResult(null)}>
-              Analyze Another
-            </button>
-            <button className="submit-btn" onClick={handleDownloadPDF}>
-              <Download size={18} /> Download PDF Report
-            </button>
-          </div>
-        )}
+        <div className="header-actions">
+          {result && (
+            <>
+              <button className="submit-btn secondary-btn" onClick={() => setResult(null)}>
+                Analyze Another
+              </button>
+              <button className="submit-btn" onClick={handleDownloadPDF}>
+                <Download size={18} /> Download PDF Report
+              </button>
+            </>
+          )}
+          <button className="submit-btn secondary-btn" onClick={handleLogout} style={{borderColor: 'rgba(248, 81, 73, 0.4)', color: '#ff7b72'}}>
+            <LogOut size={18} /> Logout
+          </button>
+        </div>
       </header>
 
       <main className="main-content">
