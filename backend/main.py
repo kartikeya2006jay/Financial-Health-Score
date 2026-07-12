@@ -55,6 +55,8 @@ class SupplyChainNode(BaseModel):
     name: str
     volume: int
     type: str
+    lat: float
+    lng: float
 
 class HealthScoreResponse(BaseModel):
     overall_score: int
@@ -119,7 +121,7 @@ def analyze_health(data: EnterpriseData):
     strengths = [x.message for x in xai_explanations if x.impact > 0]
     risks = [x.message for x in xai_explanations if x.impact < 0]
     
-    # Supply Chain Generation (GST based)
+    # Supply Chain Generation (GST based) with geo-coordinates
     suppliers = ["Tata Steel", "Reliance Polymers", "Local Wholesale Co.", "Tech Components India"]
     buyers = ["L&T Construction", "Maruti Suzuki", "Flipkart Retail", "City Traders"]
     
@@ -128,13 +130,17 @@ def analyze_health(data: EnterpriseData):
         supply_chain.append(SupplyChainNode(
             name=random.choice(suppliers),
             volume=random.randint(5, 50) * 100000,
-            type="Supplier"
+            type="Supplier",
+            lat=random.uniform(11.0, 28.0),
+            lng=random.uniform(72.0, 85.0)
         ))
     for _ in range(3):
         supply_chain.append(SupplyChainNode(
             name=random.choice(buyers),
             volume=random.randint(10, 80) * 100000,
-            type="Buyer"
+            type="Buyer",
+            lat=random.uniform(11.0, 28.0),
+            lng=random.uniform(72.0, 85.0)
         ))
 
     return HealthScoreResponse(

@@ -13,6 +13,7 @@ import { collection, addDoc } from 'firebase/firestore';
 import Auth from './components/Auth';
 import SettingsPanel from './components/SettingsPanel';
 import HistoryPanel from './components/HistoryPanel';
+import SupplyChainMap from './components/SupplyChainMap';
 import './App.css';
 
 function App() {
@@ -342,34 +343,11 @@ function App() {
               </div>
 
               <div className="glass-panel full-width-panel">
-                <h3 className="panel-header"><Network size={20} /> Supply Chain Health (GST Ecosystem)</h3>
-                <div className="supply-chain-network">
-                  <div className="sc-column">
-                    <h4>Top Suppliers (Inflow)</h4>
-                    {result.supply_chain.filter(n => n.type === 'Supplier').map((node, i) => (
-                      <div className="sc-node" key={i}>
-                        <span>{node.name}</span>
-                        <span className="volume">₹{(node.volume / 100000).toFixed(1)}L / mo</span>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="sc-center">
-                    <ArrowRight size={24} color="var(--text-secondary)" />
-                    <div className="sc-center-node" style={{ margin: '0 1rem' }}>
-                      {formData.businessName || 'MSME'}
-                    </div>
-                    <ArrowRight size={24} color="var(--text-secondary)" />
-                  </div>
-                  <div className="sc-column">
-                    <h4>Top Buyers (Outflow)</h4>
-                    {result.supply_chain.filter(n => n.type === 'Buyer').map((node, i) => (
-                      <div className="sc-node" key={i}>
-                        <span>{node.name}</span>
-                        <span className="volume">₹{(node.volume / 100000).toFixed(1)}L / mo</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+                <h3 className="panel-header"><Network size={20} /> Geo-Spatial Supply Chain (GST Network)</h3>
+                <p style={{ color: 'var(--text-secondary)', marginBottom: '1rem', fontSize: '0.9rem' }}>
+                  Visualizing geographical concentration risk of top buyers and suppliers based on alternative data.
+                </p>
+                <SupplyChainMap supplyChain={result.supply_chain} msmeName={formData.businessName} />
               </div>
             </div>
           ) : activeTab === 'settings' ? (
