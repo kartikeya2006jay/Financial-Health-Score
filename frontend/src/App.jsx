@@ -3,7 +3,8 @@ import axios from 'axios';
 import {
   ShieldCheck, Activity, TrendingUp, Users, Brain, Network, Download,
   ArrowRight, ArrowLeft, LogOut, FileText, LayoutDashboard, History,
-  Settings, Building, Wallet, FileDigit, Smartphone, CheckCircle
+  Settings, Building, Wallet, FileDigit, Smartphone, CheckCircle,
+  AlertTriangle, Zap, MapPin, CreditCard
 } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
@@ -296,10 +297,15 @@ export default function App() {
                 <ScoreRing score={result.overall_score} status={result.health_status} />
                 <div className="score-meta">
                   {[
-                    { label: 'Cash Flow (AA)', val: `${result.metrics.cash_flow_health}/100` },
+                    { label: 'Credit Grade', val: result.credit_grade || '—' },
+                    { label: 'GSTIN State', val: result.gstin_state || '—' },
+                    { label: 'Sector', val: result.sector || '—' },
+                    { label: 'Credit Limit', val: result.estimated_credit_limit ? `₹${(result.estimated_credit_limit/100000).toFixed(0)}L` : '—' },
+                    { label: 'Cash Flow', val: `${result.metrics.cash_flow_health}/100` },
                     { label: 'GST Score', val: `${result.metrics.gst_compliance}/100` },
-                    { label: 'EPFO Stability', val: `${result.metrics.epfo_stability}/100` },
-                    { label: 'UPI Volume', val: `${result.metrics.upi_volume}/100` },
+                    { label: 'EPFO', val: `${result.metrics.epfo_stability}/100` },
+                    { label: 'UPI Velocity', val: `${result.metrics.upi_volume}/100` },
+                    { label: 'Payment', val: `${result.metrics.payment_timeliness ?? '—'}/100` },
                   ].map(r => (
                     <div className="score-meta-row" key={r.label}>
                       <span className="score-meta-label">{r.label}</span>
@@ -309,13 +315,14 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Metrics Grid */}
+              {/* Metrics Grid — 5 metrics now */}
               <div className="metrics-grid">
                 {[
-                  { label: 'Cash Flow Health', icon: <Activity size={14} />, val: result.metrics.cash_flow_health, color: 'linear-gradient(90deg, var(--accent), #00a884)' },
-                  { label: 'GST Compliance', icon: <ShieldCheck size={14} />, val: result.metrics.gst_compliance, color: 'linear-gradient(90deg, var(--accent-blue), #2d6af5)' },
-                  { label: 'EPFO Stability', icon: <Users size={14} />, val: result.metrics.epfo_stability, color: 'linear-gradient(90deg, var(--warning), #d97706)' },
-                  { label: 'UPI Volume', icon: <TrendingUp size={14} />, val: result.metrics.upi_volume, color: 'linear-gradient(90deg, var(--accent-purple), #7c3aed)' },
+                  { label: 'Cash Flow Health',     icon: <Activity size={14} />,    val: result.metrics.cash_flow_health,   color: 'linear-gradient(90deg, var(--accent), #00a884)' },
+                  { label: 'GST Compliance',       icon: <ShieldCheck size={14} />, val: result.metrics.gst_compliance,     color: 'linear-gradient(90deg, var(--accent-blue), #2d6af5)' },
+                  { label: 'EPFO Stability',       icon: <Users size={14} />,       val: result.metrics.epfo_stability,     color: 'linear-gradient(90deg, var(--warning), #d97706)' },
+                  { label: 'UPI Velocity',         icon: <TrendingUp size={14} />,  val: result.metrics.upi_volume,         color: 'linear-gradient(90deg, var(--accent-purple), #7c3aed)' },
+                  { label: 'Payment Timeliness',   icon: <Zap size={14} />,         val: result.metrics.payment_timeliness ?? 0, color: 'linear-gradient(90deg, #f43f5e, #be123c)' },
                 ].map(m => (
                   <div className="glass-panel metric-card" key={m.label}>
                     <div className="metric-header">
@@ -326,6 +333,74 @@ export default function App() {
                   </div>
                 ))}
               </div>
+
+              {/* Credit Intelligence Panel */}
+              {(result.credit_grade || result.estimated_credit_limit || (result.recommended_products && result.recommended_products.length > 0)) && (
+                <div className="glass-panel full-width-panel">
+                  <h3 className="panel-header">
+                    <CreditCard size={18} /> Credit Intelligence
+                    <span className="panel-badge">Altman-Z Inspired</span>
+                  </h3>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+                    <div>
+                      <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600 }}>Credit Grading</p>
+                      <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                        <span style={{ fontFamily: 'Space Grotesk', fontSize: '2.5rem', fontWeight: 800, color: 'var(--accent)' }}>{result.credit_grade || '—'}</span>
+                        <span style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>credit rating</span>
+                      </div>
+                      <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{result.credit_rationale || ''}</p>
+                      {result.estimated_credit_limit > 0 && (
+                        <div style={{ marginTop: '1rem', padding: '0.75rem 1rem', background: 'rgba(0,212,170,0.07)', borderRadius: '9px', border: '1px solid rgba(0,212,170,0.2)' }}>
+                          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.2rem' }}>ESTIMATED CREDIT LIMIT</p>
+                          <p style={{ fontFamily: 'Space Grotesk', fontSize: '1.5rem', fontWeight: 700, color: 'var(--accent)' }}>₹{result.estimated_credit_limit.toLocaleString('en-IN')}</p>
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600 }}>Recommended Products</p>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                        {(result.recommended_products || []).map((p, i) => (
+                          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0.6rem 0.85rem', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid var(--border)', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                            <Zap size={13} color="var(--accent)" />
+                            {p}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Risk Flags */}
+              {result.risk_flags && result.risk_flags.length > 0 && (
+                <div className="glass-panel full-width-panel">
+                  <h3 className="panel-header">
+                    <AlertTriangle size={18} /> Risk Flags & Compliance Alerts
+                    <span className="panel-badge">{result.risk_flags.length} Flag{result.risk_flags.length !== 1 ? 's' : ''}</span>
+                  </h3>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+                    {result.risk_flags.map((f, i) => (
+                      <div key={i} style={{
+                        display: 'flex', alignItems: 'flex-start', gap: '1rem',
+                        padding: '0.9rem 1.1rem', borderRadius: '10px',
+                        border: `1px solid ${ f.severity === 'HIGH' ? 'rgba(239,68,68,0.25)' : f.severity === 'MEDIUM' ? 'rgba(245,158,11,0.2)' : 'rgba(0,212,170,0.15)' }`,
+                        background: f.severity === 'HIGH' ? 'rgba(239,68,68,0.05)' : f.severity === 'MEDIUM' ? 'rgba(245,158,11,0.05)' : 'rgba(0,212,170,0.04)'
+                      }}>
+                        <span style={{
+                          padding: '0.2rem 0.65rem', borderRadius: '20px', fontSize: '0.7rem', fontWeight: 700,
+                          flexShrink: 0, letterSpacing: '0.04em', marginTop: '0.1rem',
+                          color: f.severity === 'HIGH' ? 'var(--danger)' : f.severity === 'MEDIUM' ? 'var(--warning)' : 'var(--accent)',
+                          background: f.severity === 'HIGH' ? 'rgba(239,68,68,0.12)' : f.severity === 'MEDIUM' ? 'rgba(245,158,11,0.12)' : 'rgba(0,212,170,0.12)',
+                        }}>{f.severity}</span>
+                        <div>
+                          <p style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '0.15rem', fontFamily: 'monospace' }}>{f.code}</p>
+                          <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>{f.description}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* XAI Section */}
               <div className="glass-panel full-width-panel">
@@ -341,9 +416,10 @@ export default function App() {
                       </span>
                       <div className="xai-bar-wrap">
                         <div className={`xai-bar ${x.impact > 0 ? 'positive' : 'negative'}`}
-                          style={{ width: `${Math.min(Math.abs(x.impact) * 3, 100)}%` }} />
+                          style={{ width: `${Math.min(Math.abs(x.impact) * 4, 100)}%` }} />
                       </div>
                       <span className="xai-text"><strong>{x.feature}: </strong>{x.message}</span>
+                      {x.percentile && <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', flexShrink: 0 }}>P{x.percentile}</span>}
                     </div>
                   ))}
                 </div>
@@ -363,18 +439,20 @@ export default function App() {
                   <thead>
                     <tr>
                       <th>Enterprise</th>
+                      <th>City</th>
+                      <th>Sector</th>
                       <th>Type</th>
                       <th>Monthly Volume</th>
-                      <th>Coordinates</th>
                     </tr>
                   </thead>
                   <tbody>
                     {result.supply_chain.map((n, i) => (
                       <tr key={i}>
                         <td style={{ color: 'var(--text-primary)', fontWeight: 500 }}>{n.name}</td>
+                        <td><span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.82rem', color: 'var(--text-secondary)' }}><MapPin size={11}/>{n.city || '—'}</span></td>
+                        <td style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{n.sector || '—'}</td>
                         <td><span className={`sc-badge ${n.type.toLowerCase()}`}>{n.type}</span></td>
                         <td style={{ color: 'var(--accent)', fontWeight: 600 }}>₹{(n.volume / 100000).toFixed(1)}L / mo</td>
-                        <td style={{ fontFamily: 'monospace', fontSize: '0.8rem' }}>{n.lat.toFixed(2)}°N, {n.lng.toFixed(2)}°E</td>
                       </tr>
                     ))}
                   </tbody>
