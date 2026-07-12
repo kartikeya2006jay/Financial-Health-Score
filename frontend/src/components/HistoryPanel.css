@@ -1,0 +1,137 @@
+.history-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  max-width: 900px;
+}
+
+.history-loading {
+  color: var(--text-secondary);
+  text-align: center;
+  margin: 4rem 0;
+}
+
+.history-header-card {
+  padding: 1.5rem 2rem;
+}
+
+.history-stats {
+  display: flex;
+  gap: 3rem;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.stat-label {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.no-data {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  gap: 1rem;
+  text-align: center;
+}
+
+.no-data h3 { color: var(--text-primary); }
+.no-data p { color: var(--text-secondary); font-size: 0.95rem; }
+
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.history-row {
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: border-color 0.2s;
+}
+
+.history-row:hover {
+  border-color: var(--accent-color);
+}
+
+.history-row-left {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.history-score-badge {
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.history-details h4 {
+  color: var(--text-primary);
+  margin-bottom: 0.15rem;
+}
+
+.history-meta {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.history-row-right {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.status-pill {
+  padding: 0.35rem 0.85rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.icon-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.icon-btn.view {
+  background: rgba(88, 166, 255, 0.1);
+  color: var(--accent-color);
+}
+.icon-btn.view:hover {
+  background: rgba(88, 166, 255, 0.25);
+}
+
+.icon-btn.delete {
+  background: rgba(248, 81, 73, 0.1);
+  color: var(--danger-color);
+}
+.icon-btn.delete:hover {
+  background: rgba(248, 81, 73, 0.25);
+}

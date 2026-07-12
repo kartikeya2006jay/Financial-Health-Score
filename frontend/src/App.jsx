@@ -2,14 +2,17 @@ import { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
 import { 
   ShieldCheck, Activity, TrendingUp, Users, Brain, Network, Download, 
-  ArrowRight, LogOut, FileText, CheckCircle2, LayoutDashboard, History, 
+  ArrowRight, ArrowLeft, LogOut, FileText, LayoutDashboard, History, 
   Settings, Building, Wallet, FileDigit, Smartphone
 } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
-import { auth } from './firebase';
+import { auth, db } from './firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { collection, addDoc } from 'firebase/firestore';
 import Auth from './components/Auth';
+import SettingsPanel from './components/SettingsPanel';
+import HistoryPanel from './components/HistoryPanel';
 import './App.css';
 
 function App() {
@@ -68,6 +71,14 @@ function App() {
     try {
       const response = await axios.post('http://localhost:8000/api/analyze-health', formData);
       setResult(response.data);
+      // Save assessment to Firestore for history
+      await addDoc(collection(db, 'assessments'), {
+        userId: user.uid,
+        businessName: formData.businessName,
+        gstin: formData.gstin,
+        result: response.data,
+        createdAt: new Date().toISOString(),
+      });
     } catch (error) {
       console.error("Error analyzing health:", error);
       alert("Failed to connect to the analysis engine. Please try again.");
@@ -361,11 +372,11 @@ function App() {
                 </div>
               </div>
             </div>
-          ) : (
-            <div className="glass-panel full-width-panel">
-              <h3 className="panel-header" style={{justifyContent: 'center', margin: '4rem 0'}}>Feature in development...</h3>
-            </div>
-          )}
+          ) : activeTab === 'settings' ? (
+            <SettingsPanel userId={user.uid} />
+          ) : activeTab === 'history' ? (
+            <HistoryPanel userId={user.uid} onViewResult={(a) => { setFormData({ businessName: a.businessName, gstin: a.gstin, udyam_reg: '', itr_ack: '', upi_vpa: '', consent_id: '', epfo_reg_no: '' }); setResult(a.result); setActiveTab('dashboard'); }} />
+          ) : null}
         </div>
       </main>
     </div>
